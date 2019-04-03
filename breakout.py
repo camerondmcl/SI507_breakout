@@ -1,4 +1,5 @@
 __author__ = 'Sam Carton and Paul Resnick'
+# converted from Pong to Breakout by Cameron McLaughlin
 
 import pyglet
 import random
@@ -73,11 +74,12 @@ class EndLine(BallDeflector):
         if side_hit == 'RIGHT':
             self.game.num_lives -= 1
             if self.game.num_lives > 0:
-                self.game.reset(False)
+                self.game.reset(False) #I had it call reset() with pause as False because it was getting annoying having to unpause the game every time, and I thought it would make for smoother gameplay (same with whenever the game is reset with 'r' or restarted with 'n')
             else:
                 self.game.reset()
         else:
             raise Exception(side_hit)
+        #got rid of the option for the ball to hit from the left since only the left side endline remains in my version of the game
 
 class Brick(BallDeflector):
 
@@ -95,13 +97,13 @@ class Brick(BallDeflector):
         elif side_hit == 'BOTTOM' or side_hit == 'TOP':
             ball.angle = (- ball.angle) % 360
         self.shunt(ball)
-        self.game.break_brick()
-        self.game.game_objects.remove(self)
+        self.game.break_brick() #this calls a function in the Game() class to handle the mechanics that result from breaking a brick
+        self.game.game_objects.remove(self) #this removes the particular Brick instance from the list of game objects and forces the game to update the screen without the broken brick (I spent a long time figuring out how to make 'broken' bricks actually disappear from the screen)
 
 class Ball(GameObject):
 
     def update(self,pressed_keys):
-        self.velocity = self.game.ball_velocity
+        self.velocity = self.game.ball_velocity #moved the ball_velocity variable from the Ball class to the Game class so that I could more easily modify it with Game() methods
         self.move()
         if self.in_play:
             for game_object in self.game.game_objects:
@@ -197,7 +199,7 @@ class Ball(GameObject):
 
 class Paddle (BallDeflector):
 
-    default_velocity = 12.0
+    default_velocity = 12.0 #made the paddle faster to accomodate the ball at higher speeds
 
     def __init__(self, player = None, up_key =None, down_key =None, left_key = None, right_key = None,
         name = None, img_file = None,
@@ -252,6 +254,7 @@ class Game(object):
         brick_height = 40,
         brick_space = 3):
 
+        #added a few variables here to handle the new game mechanics
         self.broken_bricks = 0
         self.width = width
         self.height = height
@@ -292,7 +295,7 @@ class Game(object):
                 img_file = wall_imgs[0],
                 game = self),
         ]
-        self.bricks = []
+        self.bricks = [] #bricks are stored in a list and created with nested while loops
         x_counter = 1
         while x_counter <= 6:
             y_counter = 0
@@ -324,9 +327,9 @@ class Game(object):
 
     def break_brick(self,pause=False):
         # debug_print('break_brick function called')
-        self.broken_bricks += 1
+        self.broken_bricks += 1 #keeping track of each broken brick
         # debug_print('{} bricks broken'.format(self.broken_bricks))
-        if self.broken_bricks >= 10:
+        if self.broken_bricks >= 10: #increases the speed of the ball by 2.0 units per 10 bricks broken
             self.ball_velocity = 10.0
             if self.broken_bricks >= 20:
                 self.ball_velocity = 12.0
@@ -337,13 +340,13 @@ class Game(object):
                         if self.broken_bricks >= 50:
                             self.ball_velocity = 18.0
         # debug_print('current speed: {}'.format(self.ball_velocity))
-        self.game_window.redraw_label()
-        if self.broken_bricks == 60:
+        self.game_window.redraw_label() #makes sure the updated score is shown immediately
+        if self.broken_bricks == 60: #if the win conditions are met
             self.game_window.redraw()
             self.reset()
 
     def reset(self,pause=True,game_over=False):
-        if self.num_lives > 0:
+        if self.num_lives > 0: #as long as the game is not over
             self.game_window.redraw_label()
             for game_object in self.game_objects:
                 game_object.set_initial_position()
@@ -393,7 +396,7 @@ class GameWindow(pyglet.window.Window):
         pyglet.clock.schedule_interval(self.update, 1.0/self.fps)
         pyglet.clock.set_fps_limit(self.fps)
 
-    def new_game(self):
+    def new_game(self): #creates a new instance of Game() using the same paremeters; probably a cleaner way to do this but it took forever to get this working so I didn't want to mess with anything once I got it running
         ball_img = pyglet.resource.image('ball.png')
         paddle_imgs = [pyglet.resource.image('paddle.png')]
         wall_imgs = [pyglet.resource.image('vertical_wall.png'), pyglet.resource.image('horizontal_wall.png')]
@@ -489,6 +492,7 @@ def main():
     brick_imgs = [pyglet.resource.image('brick6.png'), pyglet.resource.image('brick5.png'),
      pyglet.resource.image('brick4.png'), pyglet.resource.image('brick3.png'),
       pyglet.resource.image('brick2.png'), pyglet.resource.image('brick1.png')]
+      #brick images are stored in a list so it can be iterated through with while loop counters to allow for differently colored rows
     window = GameWindow(ball_img,paddle_imgs,wall_imgs,brick_imgs)
     debug_print("Done initializing window! Initializing app...")
 
